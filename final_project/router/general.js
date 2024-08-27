@@ -1,8 +1,43 @@
 const express = require('express');
+const axios = require('axios');
 let books = require("./booksdb.js");
 let isValid = require("./auth_users.js").isValid;
 let users = require("./auth_users.js").users;
 const public_users = express.Router();
+
+
+public_users.post("/register", (req, res) => {
+    const { username, password } = req.body;
+
+    // Check if username and password are provided
+    if (!username || !password) {
+        return res.status(400).json({ message: "Username and password are required" });
+    }
+
+    // Simulate checking if the username is already taken
+    // This should ideally be a separate call or logic
+    if (!isValid(username)) {
+        return res.status(409).json({ message: "Username already exists" });
+    }
+
+    // Create a user object to be sent in the POST request
+    const newUser = {
+        username,
+        password,
+    };
+
+    // Use Axios to make a POST request to the registration API
+    axios.post(REGISTRATION_API_URL, newUser)
+        .then(response => {
+            // Handle successful registration
+            res.status(201).json({ message: "User registered successfully" });
+        })
+        .catch(error => {
+            // Handle error during registration
+            console.error('Error registering user:', error);
+            res.status(500).json({ message: "Internal server error", error: error.message });
+        });
+});
 
 
 // Register a new user
@@ -109,6 +144,60 @@ public_users.get('/review/:isbn', function (req, res) {
         return res.status(404).json({ message: "No reviews found for this book" });
     }
 });
+
+// Add the code for getting the book details based on ISBN (done in Task 2) using Promise callbacks or async-await with Axios.
+async function getBookDetails(isbn) {
+    try {
+        // Make the API request
+        const response = await axios.get('/:isbn');
+        
+        // Extract the data from the response
+        const book = response.data;
+        
+        // Return the book details
+        return book;
+    } catch (error) {
+        console.error('Error fetching book details:', error);
+        throw error; // Re-throw the error to be handled by the caller
+    }
+}
+
+
+
+// Function to get books by author using async-await
+async function getBooksByAuthor(author) {
+    try {
+        // Make the API request
+        const response = await axios.get(`/?author=${encodeURIComponent(author)}`);
+        
+        // Extract the data from the response
+        const books = response.data;
+        
+        // Return the list of books
+        return books;
+    } catch (error) {
+        console.error('Error fetching books by author:', error);
+        throw error; // Re-throw the error to be handled by the caller
+    }
+}
+
+
+// Function to get books by title using async-await
+async function getBooksByTitle(title) {
+    try {
+        // Make the API request
+        const response = await axios.get(`/title=${encodeURIComponent(title)}`);
+        
+        // Extract the data from the response
+        const books = response.data;
+        
+        // Return the list of books
+        return books;
+    } catch (error) {
+        console.error('Error fetching books by title:', error);
+        throw error; // Re-throw the error to be handled by the caller
+    }
+}
 
 
 module.exports.general = public_users;
